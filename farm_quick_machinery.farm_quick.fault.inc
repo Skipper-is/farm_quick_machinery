@@ -32,6 +32,7 @@ function farm_quick_machinery_fault_form($form, &$form_state){
       '#format' => 'farm_format',
       '#description' => t('What went wrong? What needs fixing?'),
     );
+    $config = field_info_instance('log', 'field_farm_images', 'farm_maintenance');
     $file_directory = $config['settings']['file_directory'];
 
     // Load supported image file extensions.
@@ -76,7 +77,7 @@ function farm_quick_machinery_fault_form($form, &$form_state){
 
     $form['form']['submit'] = array(
   	'#type' => 'submit',
-  	'#value' => t('Save Usage Record'),
+  	'#value' => t('Save Fault Report'),
     '#suffix' => '<br>',
   	);
 
@@ -84,44 +85,81 @@ function farm_quick_machinery_fault_form($form, &$form_state){
 }
 
 function farm_quick_machinery_fault_form_validate($form, &$form_state){
-  if (!empty($form_state['values']['asset'])){
-  $id = 0;
-  $matches = array();
-  $result = preg_match('/\\[id: ([0-9]+)\\]/', $form_state['values']['asset'], $matches);
-  if (!empty($matches[$result])){
-    $id=$matches[$result];
-  }
-if (empty($id)) {
-    form_set_error('asset', t('Could not load the equipment record. Make sure the asset ID is included. For example: "Mower [id: 123]"'));
-  }
+  $assets = array();
+  $asset_names = drupal_explode_tags($form_state['values']['asset']);
+  foreach($asset_names as $asset_name){
+    $id = 0;
+    $matches = array();
+    $result =preg_match('/\\[id: ([0-9]+)\\]/', $asset_name, $matches);
+    if(!empty($matches[$result])){
+      $id = $matches[$result];
+    }
+    if(empty($id)){
+      form_set_error('form] [asset',t('Could not load the asset. Make sure the asset ID is included. For example "Mower [id:123]"'));
 
-  // Load the asset.
-  $asset = farm_asset_load($id);
-
-  // If the asset didn't load, throw an error.
-  if (empty($asset)) {
-    form_set_error('asset', t('Could not load the equipment. Make sure the asset name and ID are correct.'));
+    }
+    $asset = farm_asset_load($id);
+    if(!empty($asset)){
+      $assets[$id] = $asset;
+    }
+    if(empty($asset)){
+      form_set_error('form] [asset', t('Could not load the equipment. Make sure the asset name and ID are correct.'));
+    }
   }
+  $form_state['storage']['assets'] = $assets;
 
-  // Save the asset to the form state.
-  $form_state['storage']['asset'] = $asset;
-};
 }
 
 function farm_quick_machinery_fault_form_submit($form, &$form_state){
-  $timestamp
-  $image_file_id = $form_state['form']['image'];
 
-  // With the wrapper
-      // $file = file_load($image_file_id);
-      //
-      //
-      //   // Make the storage of the file permanent.
-      //   $file->status = FILE_STATUS_PERMANENT;
-      //
-      //   // Save the file information.
-      //   file_save($file);
-      //
-      //   // Save the image with the log.
-      //   $log_wrapper->field_farm_images[] = array('fid' => $image_file_id);
+  $image_file_id = $form_state['values']['image'];
+  $log_type = "farm_maintenance";
+  $asset = $form_state['storage']['assets'];
+  $asset_name = reset($asset);
+  $notes = $form_state['values']['notes']['value'];
+  $timestamp = strtotime($form_state['values']['timestamp']);
+
+  $flags = array();
+  $flags = array();
+    if (!empty($form_state['values']['flags'])){
+      foreach($form_state['values']['flags'] as $flag){
+        if (strlen($flag) > 1 ){
+          $flags[] = $flag;
+          };
+        };
+    };
+
+  $fault_fixed = $form_state['values']['done'];
+  $done = FALSE;
+  if (!empty($fault_fixed)){
+    $done = TRUE;
+  };
+  $entity_label = entity_label('farm_asset', $asset_name);
+    $fault_name = "Fault with " . $entity_label;
+
+  $log_wrapper = farm_log_create($log_type,$fault_name, $timestamp,$done,$asset,$notes,$categories=array('Machinery Usage Logs','Fault Report','Equipment') );
+  $entity_wrapper = entity_metadata_wrapper('log',$log_wrapper);
+
+  if (!empty($flags)){
+    foreach($flags as $flag){
+      $entity_wrapper->field_farm_flags[] = $flag;
+      };
+    };
+    if(!empty($image_file_id)){
+      $file = file_load($image_file_id);
+
+
+          // Make the storage of the file permanent.
+      $file->status = FILE_STATUS_PERMANENT;
+
+          // Save the file information.
+      file_save($file);
+
+          // Save the image with the log.
+      $entity_wrapper->field_farm_images[] = array('fid' => $image_file_id);
+
+    }
+
+
+    $entity_wrapper->save();
 }

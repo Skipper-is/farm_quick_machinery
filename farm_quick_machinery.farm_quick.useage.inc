@@ -145,36 +145,38 @@ function farm_quick_machinery_quick_form_faults_ajax($form, &$form_state){
 }
 
 function farm_quick_machinery_form_validate($form, &$form_state){
-  if (!empty($form_state['values']['asset'])){
-  $id = 0;
-  $matches = array();
-  $result = preg_match('/\\[id: ([0-9]+)\\]/', $form_state['values']['asset'], $matches);
-  if (!empty($matches[$result])){
-    $id=$matches[$result];
-  }
-if (empty($id)) {
-    form_set_error('asset', t('Could not load the equipment record. Make sure the asset ID is included. For example: "Mower [id: 123]"'));
-  }
+  $assets = array();
+  $asset_names = drupal_explode_tags($form_state['values']['asset']);
+  foreach($asset_names as $asset_name){
+    $id = 0;
+    $matches = array();
+    $result =preg_match('/\\[id: ([0-9]+)\\]/', $asset_name, $matches);
+    if(!empty($matches[$result])){
+      $id = $matches[$result];
+    }
+    if(empty($id)){
+      form_set_error('quick_machinery] [asset',t('Could not load the asset. Make sure the asset ID is included. For example "Mower [id:123]"'));
 
-  // Load the asset.
-  $asset = farm_asset_load($id);
-
-  // If the asset didn't load, throw an error.
-  if (empty($asset)) {
-    form_set_error('asset', t('Could not load the equipment. Make sure the asset name and ID are correct.'));
+    }
+    $asset = farm_asset_load($id);
+    if(!empty($asset)){
+      $assets[$id] = $asset;
+    }
+    if(empty($asset)){
+      form_set_error('quick_machinery] [asset', t('Could not load the equipment. Make sure the asset name and ID are correct.'));
+    }
   }
+  $form_state['storage']['assets'] = $assets;
 
-  // Save the asset to the form state.
-  $form_state['storage']['asset'] = $asset;
-};
+
 }
 
 function farm_quick_machinery_form_submit($form, &$form_state){
   $log_type = "farm_activity";
   $log_name = $form_state['values']['title'];
   $timestamp = strtotime($form_state['values']['timestamp']);
-  $asset = $form_state['storage']['asset'];
-  $assets = array($asset);
+  $assets = $form_state['storage']['assets'];
+  $asset=reset($assets);
   $notes = $form_state['values']['description']['value'];
   $area_name = $form_state['values']['area'];
   $areas = farm_term_parse_names($area_name, 'farm_areas', TRUE);

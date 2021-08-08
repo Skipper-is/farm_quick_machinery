@@ -12,6 +12,12 @@ function farm_quick_machinery_farm_quick_forms(){
       'permission'=> 'create farm_maintenance log entities',
       'form'=> 'farm_quick_machinery_fault_form',
       'file'=> 'farm_quick_machinery.farm_quick.fault.inc',
-    )
+    ),
+    'quick_fuel' =>array(
+      'label'=>t("Machinery Refuel"),
+      'permission'=>'create farm_maintenance log entities',
+      'form' => 'farm_quick_machinery_refuel_form',
+      'file'=> 'farm_quick_machinery.farm_quick_refuel.inc',
+    ),
   );
 };
