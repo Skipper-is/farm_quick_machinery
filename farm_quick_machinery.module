@@ -2,5 +2,5 @@
 function farm_quick_machinery_farm_log_categories() {
 
   // Provide an "Animals" log category.
-  return array('Machinery Usage Logs','Fault Report');
+  return array('Machinery Usage Logs','Fault Report', 'Prestart Check');
 }

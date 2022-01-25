@@ -3,7 +3,7 @@ function farm_quick_machinery_farm_quick_forms(){
   return array(
     'quick_useage'=> array(
       'label' => t('Machinery Usage Log'),
-      'permission' => ' create farm_maintenance log entities',
+      'permission'=> 'create farm_maintenance log entities',
       'form' => 'farm_quick_machinery_form',
       'file' => 'farm_quick_machinery.farm_quick.useage.inc',
     ),
@@ -18,6 +18,12 @@ function farm_quick_machinery_farm_quick_forms(){
       'permission'=>'create farm_maintenance log entities',
       'form' => 'farm_quick_machinery_refuel_form',
       'file'=> 'farm_quick_machinery.farm_quick_refuel.inc',
+    ),
+    'quick_prestart' => array(
+      'label'=>t("Machinery Prestart Checks"),
+      'permission'=>'create farm_maintenance log entities',
+      'form' => 'farm_quick_machinery_prestart_form',
+      'file'=> 'farm_quick_machinery.farm_quick_prestart.inc',
     ),
   );
 };

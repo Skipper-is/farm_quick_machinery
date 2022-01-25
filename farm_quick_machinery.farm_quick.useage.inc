@@ -51,7 +51,6 @@ function farm_quick_machinery_form($form, &$form_state){
     '#description' => t('Suggested things to record in the notes: <ul><li>Usage - Where it was used, what you did</li><li>Refuelled or oiled?</li><li>if any parts have been replaced</li></ul>'),
   );
 
-
   $form['quick_machinery']['hours'] = array(
     '#type' => 'textfield',
     '#title' => t('Usage Hours'),
@@ -184,6 +183,7 @@ function farm_quick_machinery_form_submit($form, &$form_state){
     drupal_set_message(t('An error occurred while creating/loading areas.'), 'error');
     return;
   };
+
   $hours = $form_state['values']['hours'];
   $faultcheck = $form_state['values']['faultcheck'];
   if (!empty($faultcheck)){
@@ -238,8 +238,12 @@ function farm_quick_machinery_form_submit($form, &$form_state){
         );
       }
 
-    $log = farm_quantity_log_create($log_type, $log_name, $timestamp, TRUE, $assets, $measurements, $notes,$categories=array('Machinery Usage Logs','Equipment'));
+    $log = farm_quantity_log_create($log_type, $log_name, $timestamp, TRUE, NULL, $measurements, $notes,$categories=array('Machinery Usage Logs','Equipment'));
     $log_wrapper = entity_metadata_wrapper('log',$log);
+foreach($assets as $asset){
+  $log_wrapper->field_farm_equipment[]=$asset;
+};
+
     foreach($areas as $area){
       $log_wrapper->field_farm_area[]=$area;
       };
